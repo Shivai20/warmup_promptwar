@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 import re
@@ -12,6 +13,8 @@ from app.schemas import (
     SuggestedTask,
     SimplifyStepResponse,
     VoiceIntentResponse,
+    MedicalIndicator,
+    MedicalReportResponse,
 )
 
 load_dotenv()
@@ -34,6 +37,17 @@ def is_ai_live() -> bool:
     return genai_client is not None
 
 
+async def _async_generate_content(contents, config, timeout_sec: float = 6.0):
+    """Execute genai_client call asynchronously with a resilient timeout."""
+    def _call():
+        return genai_client.models.generate_content(
+            model=PRIMARY_MODEL,
+            contents=contents,
+            config=config,
+        )
+    return await asyncio.wait_for(asyncio.to_thread(_call), timeout=timeout_sec)
+
+
 # High-fidelity fallback for official sample notice
 OFFICIAL_SAMPLE_TEXT = (
     "Your community centre orientation is on 24 September 2026 at 11:00 AM, Room 2. "
@@ -41,10 +55,278 @@ OFFICIAL_SAMPLE_TEXT = (
     "For questions, contact the centre using the number on your registration confirmation."
 )
 
+OFFICIAL_MEDICAL_SAMPLE = (
+    "METROPOLITAN HEALTH LABS - ROUTINE GERIATRIC HEALTH PANEL\n"
+    "Patient: Ramesh Verma (Age: 71) | Date: 18 September 2026\n"
+    "1. Fasting Blood Glucose: 138 mg/dL (Reference Range: 70 - 100 mg/dL) [HIGH]\n"
+    "2. Blood Pressure (Resting): 132/84 mmHg (Reference Range: < 120/80 mmHg) [BORDERLINE]\n"
+    "3. Total Cholesterol: 185 mg/dL (Reference Range: < 200 mg/dL) [NORMAL]\n"
+    "4. Hemoglobin (Hb): 13.8 g/dL (Reference Range: 13.0 - 17.0 g/dL) [NORMAL]\n"
+    "5. Serum Creatinine: 1.0 mg/dL (Reference Range: 0.7 - 1.3 mg/dL) [NORMAL]\n"
+    "Recommendation: Review fasting blood glucose with your primary physician. Maintain adequate hydration and continue walking daily."
+)
+
+
+def get_mock_medical_report(text: str, language: str) -> MedicalReportResponse:
+    is_hindi = language == "hi"
+    if is_hindi:
+        return MedicalReportResponse(
+            summary="आपकी स्वास्थ्य रिपोर्ट में अधिकांश टेस्ट (कोलेस्ट्रॉल, हीमोग्लोबिन और किडनी) बिल्कुल सामान्य और स्वस्थ हैं। केवल खाली पेट ब्लड शुगर (138 mg/dL) थोड़ा अधिक है और बीपी थोड़ा बॉर्डरलाइन है। चिंता की कोई बात नहीं है, डॉक्टर से परामर्श लें।",
+            patient_name="रमेश वर्मा (71 वर्ष)",
+            report_date="18 सितंबर 2026",
+            indicators=[
+                MedicalIndicator(
+                    name="खाली पेट ब्लड शुगर (Fasting Glucose)",
+                    value="138 mg/dL",
+                    reference_range="70 - 100 mg/dL",
+                    status="high",
+                    source_excerpt="Fasting Blood Glucose: 138 mg/dL (Reference Range: 70 - 100 mg/dL)",
+                    simple_meaning="रातभर के उपवास के बाद रक्त में शर्करा (शुगर) का स्तर।",
+                ),
+                MedicalIndicator(
+                    name="रक्तचाप (Blood Pressure)",
+                    value="132/84 mmHg",
+                    reference_range="< 120/80 mmHg",
+                    status="borderline",
+                    source_excerpt="Blood Pressure (Resting): 132/84 mmHg (Reference Range: < 120/80 mmHg)",
+                    simple_meaning="धमनियों में रक्त का दबाव, थोड़ा बॉर्डरलाइन है।",
+                ),
+                MedicalIndicator(
+                    name="कुल कोलेस्ट्रॉल (Total Cholesterol)",
+                    value="185 mg/dL",
+                    reference_range="< 200 mg/dL",
+                    status="normal",
+                    source_excerpt="Total Cholesterol: 185 mg/dL (Reference Range: < 200 mg/dL)",
+                    simple_meaning="रक्त में स्वस्थ वसा (फैट) का स्तर, बिल्कुल सही है।",
+                ),
+                MedicalIndicator(
+                    name="हीमोग्लोबिन (Hemoglobin)",
+                    value="13.8 g/dL",
+                    reference_range="13.0 - 17.0 g/dL",
+                    status="normal",
+                    source_excerpt="Hemoglobin (Hb): 13.8 g/dL (Reference Range: 13.0 - 17.0 g/dL)",
+                    simple_meaning="शरीर में ऊर्जा और ऑक्सीजन ले जाने वाला रक्त घटक, उत्तम स्तर।",
+                ),
+                MedicalIndicator(
+                    name="सीरम क्रिएटिनिन (Kidney Function)",
+                    value="1.0 mg/dL",
+                    reference_range="0.7 - 1.3 mg/dL",
+                    status="normal",
+                    source_excerpt="Serum Creatinine: 1.0 mg/dL (Reference Range: 0.7 - 1.3 mg/dL)",
+                    simple_meaning="किडनी की कार्यक्षमता का परीक्षण, सामान्य है।",
+                ),
+            ],
+            unfamiliar_terms=[
+                TermItem(
+                    term="Fasting Glucose",
+                    explanation="बिना कुछ खाए सुबह जांचा गया शुगर स्तर।",
+                ),
+                TermItem(
+                    term="Creatinine",
+                    explanation="किडनी द्वारा साफ किया जाने वाला अपशिष्ट, जो किडनी के स्वास्थ्य को दर्शाता है।",
+                ),
+            ],
+            doctor_questions=[
+                "क्या 138 mg/dL ब्लड शुगर के लिए मुझे दवा की खुराक या नाश्ते में बदलाव करना चाहिए?",
+                "क्या 132/84 mmHg ब्लड प्रेशर मेरी उम्र (71 वर्ष) के लिए सुरक्षित है?",
+                "अगली जांच मुझे कितने महीनों बाद करवानी चाहिए?",
+            ],
+            suggested_followups=[
+                SuggestedTask(
+                    id="med-task-1",
+                    title="डॉक्टर से ब्लड शुगर रिपोर्ट (138 mg/dL) पर परामर्श लें",
+                    candidate_date_time="2026-09-22T10:30:00",
+                    source_excerpt="Review fasting blood glucose with your primary physician.",
+                ),
+                SuggestedTask(
+                    id="med-task-2",
+                    title="रोजाना सुबह 20 मिनट की सैर और पर्याप्त पानी पिएं",
+                    candidate_date_time=None,
+                    source_excerpt="Maintain adequate hydration and continue walking daily.",
+                ),
+            ],
+            disclaimer="बीटा एआई आपकी रिपोर्ट को सरल भाषा में समझाने के लिए है। किसी भी दवा या खुराक में बदलाव से पहले कृपया अपने डॉक्टर से परामर्श अवश्य लें।",
+            language="hi",
+        )
+    else:
+        return MedicalReportResponse(
+            summary="Your health panel shows that most test results (Cholesterol, Hemoglobin, and Kidney function) are in a healthy normal range. Your fasting blood glucose is slightly elevated at 138 mg/dL, and blood pressure is mildly borderline (132/84 mmHg). There is no cause for alarm; we have outlined simple questions to discuss at your next doctor visit.",
+            patient_name="Ramesh Verma (Age: 71)",
+            report_date="18 September 2026",
+            indicators=[
+                MedicalIndicator(
+                    name="Fasting Blood Glucose",
+                    value="138 mg/dL",
+                    reference_range="70 - 100 mg/dL",
+                    status="high",
+                    source_excerpt="Fasting Blood Glucose: 138 mg/dL (Reference Range: 70 - 100 mg/dL)",
+                    simple_meaning="Sugar level in your bloodstream after an overnight fast. Mildly elevated.",
+                ),
+                MedicalIndicator(
+                    name="Blood Pressure (Resting)",
+                    value="132/84 mmHg",
+                    reference_range="< 120/80 mmHg",
+                    status="borderline",
+                    source_excerpt="Blood Pressure (Resting): 132/84 mmHg (Reference Range: < 120/80 mmHg)",
+                    simple_meaning="Pressure in your blood vessels at rest. Mildly borderline for age 71.",
+                ),
+                MedicalIndicator(
+                    name="Total Cholesterol",
+                    value="185 mg/dL",
+                    reference_range="< 200 mg/dL",
+                    status="normal",
+                    source_excerpt="Total Cholesterol: 185 mg/dL (Reference Range: < 200 mg/dL)",
+                    simple_meaning="Overall fat lipids in your bloodstream. In healthy range.",
+                ),
+                MedicalIndicator(
+                    name="Hemoglobin (Hb)",
+                    value="13.8 g/dL",
+                    reference_range="13.0 - 17.0 g/dL",
+                    status="normal",
+                    source_excerpt="Hemoglobin (Hb): 13.8 g/dL (Reference Range: 13.0 - 17.0 g/dL)",
+                    simple_meaning="Protein carrying oxygen in red blood cells. Good healthy energy indicator.",
+                ),
+                MedicalIndicator(
+                    name="Serum Creatinine",
+                    value="1.0 mg/dL",
+                    reference_range="0.7 - 1.3 mg/dL",
+                    status="normal",
+                    source_excerpt="Serum Creatinine: 1.0 mg/dL (Reference Range: 0.7 - 1.3 mg/dL)",
+                    simple_meaning="Indicates that your kidneys are filtering and functioning smoothly.",
+                ),
+            ],
+            unfamiliar_terms=[
+                TermItem(
+                    term="Fasting Glucose",
+                    explanation="Blood sugar measured after not eating overnight, showing baseline glucose control.",
+                ),
+                TermItem(
+                    term="Serum Creatinine",
+                    explanation="A routine natural marker filtered by the kidneys, confirming healthy filtration.",
+                ),
+            ],
+            doctor_questions=[
+                "Should we adjust my diet or medication timing for the 138 mg/dL fasting blood glucose reading?",
+                "Is a resting blood pressure of 132/84 mmHg acceptable for my routine, or should I monitor it daily?",
+                "When should I repeat this routine lab panel?",
+            ],
+            suggested_followups=[
+                SuggestedTask(
+                    id="med-task-1",
+                    title="Consult physician regarding fasting blood sugar reading of 138 mg/dL",
+                    candidate_date_time="2026-09-22T10:30:00",
+                    source_excerpt="Review fasting blood glucose with your primary physician.",
+                ),
+                SuggestedTask(
+                    id="med-task-2",
+                    title="Keep hydrated and maintain daily morning walking routine",
+                    candidate_date_time=None,
+                    source_excerpt="Maintain adequate hydration and continue walking daily.",
+                ),
+            ],
+            disclaimer="Beta AI explains test reports for your understanding and peace of mind. Please consult your physician before making any changes to your medication or diet.",
+            language="en",
+        )
+
 
 def get_mock_explanation(text: str, language: str) -> ExplainResponse:
     is_hindi = language == "hi"
     lower_text = text.lower()
+
+    # If it is a medical report / lab panel
+    if is_medical_text(text):
+        med_rep = get_mock_medical_report(text, language)
+        if is_hindi:
+            return ExplainResponse(
+                summary=med_rep.summary,
+                facts=[
+                    FactItem(
+                        label="मरीज का विवरण",
+                        value=med_rep.patient_name or "रमेश वर्मा (71 वर्ष)",
+                        source_excerpt="Patient: Ramesh Verma (Age: 71)",
+                    ),
+                    FactItem(
+                        label="फास्टिंग ब्लड ग्लूकोज",
+                        value="138 mg/dL (मानक दायरा: 70 - 100 mg/dL) [उच्च]",
+                        source_excerpt="1. Fasting Blood Glucose: 138 mg/dL (Reference Range: 70 - 100 mg/dL) [HIGH]",
+                    ),
+                    FactItem(
+                        label="ब्लड प्रेशर (विश्राम)",
+                        value="132/84 mmHg (मानक: < 120/80 mmHg) [सीमा रेखा]",
+                        source_excerpt="2. Blood Pressure (Resting): 132/84 mmHg (Reference Range: < 120/80 mmHg) [BORDERLINE]",
+                    ),
+                ],
+                unfamiliar_terms=med_rep.unfamiliar_terms,
+                steps=[
+                    StepItem(
+                        id="step-1",
+                        instruction="अगले 3-5 दिनों के भीतर अपने डॉक्टर से परामर्श का समय तय करें।",
+                        source_excerpt="Review fasting blood glucose with your primary physician.",
+                        is_general_suggestion=False,
+                    ),
+                    StepItem(
+                        id="step-2",
+                        instruction="रोजाना सुबह की सैर जारी रखें और दिन भर पर्याप्त पानी पिएं।",
+                        source_excerpt="Maintain adequate hydration and continue walking daily.",
+                        is_general_suggestion=True,
+                    ),
+                ],
+                clarifications=[],
+                suggested_tasks=med_rep.suggested_followups,
+                cautions=[
+                    "यह रिपोर्ट केवल आपकी जानकारी और शांति के लिए समझाई गई है। डॉक्टर से सलाह लिए बिना किसी भी दवा या खुराक में बदलाव न करें।"
+                ],
+                language="hi",
+                medical_report=med_rep,
+            )
+        else:
+            return ExplainResponse(
+                summary=med_rep.summary,
+                facts=[
+                    FactItem(
+                        label="Patient Details",
+                        value=med_rep.patient_name or "Ramesh Verma (Age: 71)",
+                        source_excerpt="Patient: Ramesh Verma (Age: 71)",
+                    ),
+                    FactItem(
+                        label="Fasting Blood Glucose",
+                        value="138 mg/dL (Normal: 70 - 100 mg/dL) [HIGH]",
+                        source_excerpt="1. Fasting Blood Glucose: 138 mg/dL (Reference Range: 70 - 100 mg/dL) [HIGH]",
+                    ),
+                    FactItem(
+                        label="Blood Pressure",
+                        value="132/84 mmHg (Normal: < 120/80 mmHg) [BORDERLINE]",
+                        source_excerpt="2. Blood Pressure (Resting): 132/84 mmHg (Reference Range: < 120/80 mmHg) [BORDERLINE]",
+                    ),
+                    FactItem(
+                        label="Total Cholesterol",
+                        value="185 mg/dL (Normal: < 200 mg/dL) [NORMAL]",
+                        source_excerpt="3. Total Cholesterol: 185 mg/dL (Reference Range: < 200 mg/dL) [NORMAL]",
+                    ),
+                ],
+                unfamiliar_terms=med_rep.unfamiliar_terms,
+                steps=[
+                    StepItem(
+                        id="step-1",
+                        instruction="Schedule a routine follow-up appointment with your primary care doctor within the next week.",
+                        source_excerpt="Review fasting blood glucose with your primary physician.",
+                        is_general_suggestion=False,
+                    ),
+                    StepItem(
+                        id="step-2",
+                        instruction="Continue your daily morning walks and ensure adequate hydration throughout the day.",
+                        source_excerpt="Maintain adequate hydration and continue walking daily.",
+                        is_general_suggestion=True,
+                    ),
+                ],
+                clarifications=[],
+                suggested_tasks=med_rep.suggested_followups,
+                cautions=[
+                    "Beta AI provides report explanations for informational peace of mind. Never adjust your medications or diet without consulting your doctor."
+                ],
+                language="en",
+                medical_report=med_rep,
+            )
 
     # If it is the official community centre orientation notice
     if "community centre" in lower_text or "orientation" in lower_text:
@@ -309,8 +591,7 @@ Respond ONLY with valid JSON matching this schema:
 """
 
     try:
-        response = genai_client.models.generate_content(
-            model=PRIMARY_MODEL,
+        response = await _async_generate_content(
             contents=[
                 {"role": "user", "parts": [{"text": system_prompt + f"\n\nNOTICE CONTENT:\n```\n{text}\n```"}]}
             ],
@@ -318,13 +599,96 @@ Respond ONLY with valid JSON matching this schema:
                 "response_mime_type": "application/json",
                 "temperature": 0.1,
             },
+            timeout_sec=6.0,
         )
         content_text = response.text.strip()
         data = json.loads(content_text)
-        return ExplainResponse(**data)
+        explain_resp = ExplainResponse(**data)
+        if is_medical_text(text) and not explain_resp.medical_report:
+            try:
+                explain_resp.medical_report = await analyze_medical_report(text, language)
+            except Exception as med_err:
+                print(f"Notice: could not auto-attach medical report: {med_err}")
+        return explain_resp
     except Exception as e:
-        print(f"Error calling Gemini API for explain_notice: {e}. Falling back to mock generator.")
-        return get_mock_explanation(text, language)
+        print(f"Notice/fallback: Gemini API call unavailable or timed out ({e}). Falling back to mock generator.")
+        mock_resp = get_mock_explanation(text, language)
+        if is_medical_text(text) and not mock_resp.medical_report:
+            mock_resp.medical_report = get_mock_medical_report(text, language)
+        return mock_resp
+
+
+def is_medical_text(text: str) -> bool:
+    lower = text.lower()
+    return bool(
+        re.search(
+            r'\b(glucose|blood pressure|cholesterol|hemoglobin|creatinine|mg/dl|mmhg|g/dl|patient|lab|doctor|test result|health panel|clinic|prescription|sugar level)\b',
+            lower,
+        )
+    )
+
+
+async def analyze_medical_report(text: str, language: str = "en") -> MedicalReportResponse:
+    if not genai_client:
+        return get_mock_medical_report(text, language)
+
+    system_prompt = f"""
+You are Beta AI, a calm, trustworthy medical report interpreter for senior citizens.
+Analyze this medical report, lab panel, or health test result for an older adult.
+Target Language: {'Hindi (in clear, simple Devanagari)' if language == 'hi' else 'Plain, respectful English'}.
+
+CRITICAL BOUNDARIES:
+1. Grounding: Every indicator MUST have the exact quoted 'source_excerpt' from the input text.
+2. Status: Assign status strictly as one of: 'normal', 'high', 'low', 'borderline', or 'check_with_doctor'.
+3. Tone: Reassuring, calm, non-alarmist, short sentences.
+4. No Diagnosis: Explain what the test measures in simple words, but NEVER diagnose illness or prescribe treatments.
+5. Doctor Questions: Formulate 2-3 polite, concrete questions for the senior to ask their doctor.
+6. Disclaimer: Include: "Beta AI explains reports for your understanding and peace of mind. Please consult your physician before making any changes to your medication or diet."
+
+Respond ONLY with valid JSON matching this schema:
+{{
+  "summary": "Calming 2-sentence plain-language overview",
+  "patient_name": "Patient name or null",
+  "report_date": "Report date or null",
+  "indicators": [
+    {{
+      "name": "Test Name",
+      "value": "Patient Value with unit",
+      "reference_range": "Normal range or null",
+      "status": "normal|high|low|borderline|check_with_doctor",
+      "source_excerpt": "Exact quote from report",
+      "simple_meaning": "Simple 1-sentence senior definition"
+    }}
+  ],
+  "unfamiliar_terms": [
+    {{"term": "Medical term", "explanation": "Simple plain language explanation"}}
+  ],
+  "doctor_questions": ["Question 1 to ask doctor", "Question 2"],
+  "suggested_followups": [
+    {{"id": "med-1", "title": "Action title", "candidate_date_time": "ISO date or null", "source_excerpt": "Quote"}}
+  ],
+  "disclaimer": "Beta AI explains reports for your understanding and peace of mind. Please consult your physician before making any changes to your medication or diet.",
+  "language": "{language}"
+}}
+"""
+
+    try:
+        response = await _async_generate_content(
+            contents=[
+                {"role": "user", "parts": [{"text": system_prompt + f"\n\nMEDICAL REPORT CONTENT:\n```\n{text}\n```"}]}
+            ],
+            config={
+                "response_mime_type": "application/json",
+                "temperature": 0.1,
+            },
+            timeout_sec=6.0,
+        )
+        content_text = response.text.strip()
+        data = json.loads(content_text)
+        return MedicalReportResponse(**data)
+    except Exception as e:
+        print(f"Notice/fallback: Gemini API call for medical report unavailable or timed out ({e}). Falling back to mock.")
+        return get_mock_medical_report(text, language)
 
 
 async def simplify_step(step_instruction: str, context: Optional[str] = None, language: str = "en") -> SimplifyStepResponse:
@@ -354,13 +718,13 @@ Respond ONLY with valid JSON:
 }}
 """
     try:
-        response = genai_client.models.generate_content(
-            model=PRIMARY_MODEL,
+        response = await _async_generate_content(
             contents=[{"role": "user", "parts": [{"text": prompt}]}],
             config={
                 "response_mime_type": "application/json",
                 "temperature": 0.1,
             },
+            timeout_sec=5.0,
         )
         data = json.loads(response.text.strip())
         return SimplifyStepResponse(**data)

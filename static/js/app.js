@@ -58,7 +58,12 @@
       error: "Error",
       back: "Back",
       home: "Home",
-      sampleNoticeText: "Your community centre orientation is on 24 September 2026 at 11:00 AM, Room 2. Bring your registration confirmation. Please arrive 15 minutes early. For questions, contact the centre using the number on your registration confirmation."
+      sampleNoticeText: "Your community centre orientation is on 24 September 2026 at 11:00 AM, Room 2. Bring your registration confirmation. Please arrive 15 minutes early. For questions, contact the centre using the number on your registration confirmation.",
+      sampleMedicalBtn: "Try Medical Lab Report",
+      medSectionTitle: "Health Indicators & Lab Analysis",
+      medDoctorQTitle: "Helpful Questions to Ask Your Doctor",
+      medAddReminder: "Schedule Doctor Consultation in My Day",
+      sampleMedicalReportText: "METROPOLITAN HEALTH LABS - ROUTINE GERIATRIC HEALTH PANEL\nPatient: Ramesh Verma (Age: 71) | Date: 18 September 2026\n1. Fasting Blood Glucose: 138 mg/dL (Reference Range: 70 - 100 mg/dL) [HIGH]\n2. Blood Pressure (Resting): 132/84 mmHg (Reference Range: < 120/80 mmHg) [BORDERLINE]\n3. Total Cholesterol: 185 mg/dL (Reference Range: < 200 mg/dL) [NORMAL]\n4. Hemoglobin (Hb): 13.8 g/dL (Reference Range: 13.0 - 17.0 g/dL) [NORMAL]\n5. Serum Creatinine: 1.0 mg/dL (Reference Range: 0.7 - 1.3 mg/dL) [NORMAL]\nRecommendation: Review fasting blood glucose with your primary physician. Maintain adequate hydration and continue walking daily."
     },
     hi: {
       brandTagline: "वरिष्ठ नागरिकों का दैनिक साथी",
@@ -110,7 +115,12 @@
       error: "त्रुटि",
       back: "पीछे",
       home: "होम",
-      sampleNoticeText: "Your community centre orientation is on 24 September 2026 at 11:00 AM, Room 2. Bring your registration confirmation. Please arrive 15 minutes early. For questions, contact the centre using the number on your registration confirmation."
+      sampleNoticeText: "Your community centre orientation is on 24 September 2026 at 11:00 AM, Room 2. Bring your registration confirmation. Please arrive 15 minutes early. For questions, contact the centre using the number on your registration confirmation.",
+      sampleMedicalBtn: "मेडिकल लैब रिपोर्ट आज़माएं",
+      medSectionTitle: "स्वास्थ्य संकेतक और लैब विश्लेषण",
+      medDoctorQTitle: "अपने डॉक्टर से पूछने योग्य सवाल",
+      medAddReminder: "डॉक्टर से परामर्श माय डे में जोड़ें",
+      sampleMedicalReportText: "METROPOLITAN HEALTH LABS - ROUTINE GERIATRIC HEALTH PANEL\nPatient: Ramesh Verma (Age: 71) | Date: 18 September 2026\n1. Fasting Blood Glucose: 138 mg/dL (Reference Range: 70 - 100 mg/dL) [HIGH]\n2. Blood Pressure (Resting): 132/84 mmHg (Reference Range: < 120/80 mmHg) [BORDERLINE]\n3. Total Cholesterol: 185 mg/dL (Reference Range: < 200 mg/dL) [NORMAL]\n4. Hemoglobin (Hb): 13.8 g/dL (Reference Range: 13.0 - 17.0 g/dL) [NORMAL]\n5. Serum Creatinine: 1.0 mg/dL (Reference Range: 0.7 - 1.3 mg/dL) [NORMAL]\nRecommendation: Review fasting blood glucose with your primary physician. Maintain adequate hydration and continue walking daily."
     }
   };
 
@@ -163,10 +173,17 @@
     // Explain
     noticeInputText: document.getElementById('notice-input-text'),
     btnUseSample: document.getElementById('btn-use-sample-notice'),
+    btnUseSampleMedical: document.getElementById('btn-use-sample-medical'),
     btnSubmitExplain: document.getElementById('btn-submit-explain'),
     explainResults: document.getElementById('explain-results'),
     explainSummaryText: document.getElementById('explain-summary-text'),
     explainFactsList: document.getElementById('explain-facts-list'),
+    medicalReportSection: document.getElementById('medical-report-section'),
+    medicalReportMeta: document.getElementById('medical-report-meta'),
+    medicalIndicatorsList: document.getElementById('medical-indicators-list'),
+    medicalDoctorQuestions: document.getElementById('medical-doctor-questions'),
+    medicalDisclaimerText: document.getElementById('medical-disclaimer-text'),
+    btnAddMedicalReminder: document.getElementById('btn-add-medical-reminder'),
     explainClarificationsBox: document.getElementById('explain-clarifications-box'),
     explainClarificationsList: document.getElementById('explain-clarifications-list'),
     explainCautionsBox: document.getElementById('explain-cautions-box'),
@@ -265,6 +282,10 @@
       'txt-add-task-btn': dict.addTaskBtn,
       'txt-paste-prompt': dict.pastePrompt,
       'txt-sample-btn': dict.sampleBtn,
+      'txt-sample-medical-btn': dict.sampleMedicalBtn,
+      'txt-med-section-title': dict.medSectionTitle,
+      'txt-med-doctor-q-title': dict.medDoctorQTitle,
+      'txt-med-add-reminder': dict.medAddReminder,
       'txt-explain-btn': dict.explainBtn,
       'txt-audio-read': dict.readAloud,
       'txt-audio-stop': dict.stop,
@@ -812,6 +833,79 @@
       el.explainTermsSection.style.display = 'none';
     }
 
+    // Medical Report Section (Health Indicators & Lab Analysis)
+    if (data.medical_report && el.medicalReportSection) {
+      const med = data.medical_report;
+      el.medicalReportSection.style.display = 'block';
+
+      if (el.medicalReportMeta) {
+        el.medicalReportMeta.textContent = [med.patient_name, med.report_date].filter(Boolean).join(' • ') || '';
+      }
+
+      // Render Indicators
+      if (el.medicalIndicatorsList) {
+        el.medicalIndicatorsList.innerHTML = '';
+        if (med.indicators && med.indicators.length > 0) {
+          med.indicators.forEach((ind) => {
+            const card = document.createElement('div');
+            card.className = 'medical-indicator-card';
+            const statusClass = `status-${(ind.status || 'normal').toLowerCase()}`;
+            card.innerHTML = `
+              <div class="indicator-header">
+                <span class="indicator-name">${escapeHtml(ind.name)}</span>
+                <span class="indicator-badge ${statusClass}">${escapeHtml(ind.status)}</span>
+              </div>
+              <div class="indicator-value-row">
+                <span class="indicator-val">${escapeHtml(ind.value)}</span>
+                <span class="indicator-ref">${state.language === 'hi' ? 'मानक दायरा:' : 'Normal Range:'} ${escapeHtml(ind.reference_range || '--')}</span>
+              </div>
+              <div class="indicator-meaning">${escapeHtml(ind.meaning)}</div>
+              ${ind.source_excerpt ? `<div class="source-quote" title="Exact quote from report">"${escapeHtml(ind.source_excerpt)}"</div>` : ''}
+            `;
+            el.medicalIndicatorsList.appendChild(card);
+          });
+        }
+      }
+
+      // Doctor Questions
+      if (el.medicalDoctorQuestions) {
+        if (med.doctor_questions && med.doctor_questions.length > 0) {
+          el.medicalDoctorQuestions.innerHTML = med.doctor_questions
+            .map((q) => `<li>${escapeHtml(q)}</li>`)
+            .join('');
+        }
+      }
+
+      // Disclaimer
+      if (el.medicalDisclaimerText && med.disclaimer) {
+        el.medicalDisclaimerText.textContent = med.disclaimer;
+      }
+
+      // 1-Click Reminder for Consultation
+      if (el.btnAddMedicalReminder) {
+        el.btnAddMedicalReminder.onclick = () => {
+          const defaultTitle = state.language === 'hi'
+            ? 'डॉक्टर से परामर्श - स्वास्थ्य रिपोर्ट समीक्षा'
+            : 'Doctor Consultation - Review Lab Report';
+          requestTaskConfirmation(
+            {
+              id: 'med-task-' + Date.now(),
+              title: defaultTitle,
+              candidate_date_time: null,
+              source_excerpt: med.summary || 'Review health lab results with primary care doctor'
+            },
+            (confirmed) => {
+              commitNewTask(confirmed);
+              navigateTo('myday');
+            }
+          );
+        };
+      }
+    } else if (el.medicalReportSection) {
+      el.medicalReportSection.style.display = 'none';
+    }
+
+
     // Connect Guide workflow
     el.btnStartGuideFromExplain.onclick = () => {
       startGuideFromExplanation(data);
@@ -1075,12 +1169,111 @@
   function toggleVoice() {
     if (state.speechState === 'listening') {
       stopVoiceListening();
+    } else if (state.speechState === 'speaking') {
+      stopAudioPlayback();
+      startVoiceListeningActual();
     } else {
-      startVoiceListening();
+      greetAndStartListening();
+    }
+  }
+
+  function getBestVoice(lang) {
+    if (!('speechSynthesis' in window)) return null;
+    const voices = window.speechSynthesis.getVoices();
+    if (!voices || voices.length === 0) return null;
+    const targetTag = lang === 'hi' ? 'hi-IN' : 'en-US';
+    const targetPrefix = lang === 'hi' ? 'hi' : 'en';
+    return (
+      voices.find((v) => v.lang === targetTag) ||
+      voices.find((v) => v.lang && v.lang.toLowerCase().startsWith(targetPrefix)) ||
+      voices[0] ||
+      null
+    );
+  }
+
+  function playAudioChime() {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      if (ctx.state === 'suspended') {
+        ctx.resume();
+      }
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+
+      const now = ctx.currentTime;
+      // Gentle two-tone pleasant chime
+      osc.frequency.setValueAtTime(523.25, now); // C5
+      osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.12); // G5
+
+      gain.gain.setValueAtTime(0.3, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.45);
+    } catch (e) {
+      console.warn('Audio chime notice:', e);
+    }
+  }
+
+  function greetAndStartListening() {
+    const greetingText = state.language === 'hi'
+      ? 'नमस्ते! मैं सुन रहा हूँ, बताइए क्या मदद करूँ?'
+      : 'Hello! I am listening, how can I help you?';
+
+    setVoiceStatus('speaking', greetingText);
+    playAudioChime();
+
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+      }
+
+      const utterance = new SpeechSynthesisUtterance(greetingText);
+      utterance.lang = state.language === 'hi' ? 'hi-IN' : 'en-US';
+      utterance.rate = 0.95;
+      utterance.volume = 1.0;
+
+      const voice = getBestVoice(state.language);
+      if (voice) {
+        utterance.voice = voice;
+      }
+
+      let hasStartedListening = false;
+      const proceedToListening = () => {
+        if (!hasStartedListening) {
+          hasStartedListening = true;
+          startVoiceListeningActual();
+        }
+      };
+
+      utterance.onend = proceedToListening;
+      utterance.onerror = (err) => {
+        console.warn('Speech synthesis error or cancelled:', err);
+        proceedToListening();
+      };
+
+      // Chrome speech trigger
+      window.speechSynthesis.speak(utterance);
+      if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+      }
+    } else {
+      startVoiceListeningActual();
     }
   }
 
   function startVoiceListening() {
+    startVoiceListeningActual();
+  }
+
+  function startVoiceListeningActual() {
     stopAudioPlayback(); // Never listen while app is speaking
 
     if (!recognition) {
@@ -1167,6 +1360,10 @@
     if (statusKey === 'listening') {
       el.btnMainVoice.classList.add('is-recording');
       el.voiceBtnLabel.textContent = state.language === 'hi' ? 'रोकें' : 'Stop recording';
+      el.btnMainVoice.setAttribute('aria-pressed', 'true');
+    } else if (statusKey === 'speaking') {
+      el.btnMainVoice.classList.remove('is-recording');
+      el.voiceBtnLabel.textContent = state.language === 'hi' ? 'बोल रहे हैं...' : 'Speaking...';
       el.btnMainVoice.setAttribute('aria-pressed', 'true');
     } else {
       el.btnMainVoice.classList.remove('is-recording');
@@ -1297,9 +1494,18 @@
 
     stopAudioPlayback();
 
+    if (window.speechSynthesis.paused) {
+      window.speechSynthesis.resume();
+    }
+
     currentUtterance = new SpeechSynthesisUtterance(text);
     currentUtterance.lang = state.language === 'hi' ? 'hi-IN' : 'en-US';
     currentUtterance.rate = 0.92; // Slightly slower, comfortable pace for seniors
+
+    const voice = getBestVoice(state.language);
+    if (voice) {
+      currentUtterance.voice = voice;
+    }
 
     if (buttonElement) {
       buttonElement.classList.add('speaking');
@@ -1318,6 +1524,9 @@
     };
 
     window.speechSynthesis.speak(currentUtterance);
+    if (window.speechSynthesis.paused) {
+      window.speechSynthesis.resume();
+    }
   }
 
   function stopAudioPlayback() {
@@ -1398,7 +1607,17 @@
       announce('Sample community centre orientation notice loaded.');
     });
 
+    if (el.btnUseSampleMedical) {
+      el.btnUseSampleMedical.addEventListener('click', () => {
+        const dict = I18N[state.language] || I18N.en;
+        el.noticeInputText.value = dict.sampleMedicalReportText;
+        announce('Sample medical lab report loaded.');
+        submitNoticeForExplanation();
+      });
+    }
+
     el.btnSubmitExplain.addEventListener('click', submitNoticeForExplanation);
+
 
     // My Day add task button
     el.btnMyDayAddTask.addEventListener('click', () => openTaskFormModal());

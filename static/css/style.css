@@ -776,6 +776,196 @@ body {
   line-height: 1.65;
 }
 
+/* Medical Report & Lab Indicators Section */
+.medical-section-container {
+  background: var(--bg-card);
+  border: 1.5px solid #A7F3D0;
+  border-radius: var(--radius-card);
+  padding: 24px;
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.medical-header-banner {
+  border-bottom: 1.5px solid var(--border-card);
+  padding-bottom: 14px;
+}
+
+.medical-report-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 6px;
+  font-size: 0.88em;
+  color: var(--text-secondary);
+}
+
+.medical-meta-pill {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-card);
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  font-weight: 600;
+}
+
+.medical-indicators-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+@media (min-width: 640px) {
+  .medical-indicators-grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+}
+
+.medical-indicator-card {
+  background: #FFFFFF;
+  border: 1.5px solid var(--border-card);
+  border-radius: var(--radius-btn);
+  padding: 18px 20px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+  transition: var(--transition);
+}
+.medical-indicator-card:hover {
+  box-shadow: var(--shadow-card);
+  transform: translateY(-2px);
+}
+
+.medical-indicator-card.status-normal {
+  border-left: 5px solid #16A34A;
+}
+.medical-indicator-card.status-high {
+  border-left: 5px solid #DC2626;
+}
+.medical-indicator-card.status-low {
+  border-left: 5px solid #2563EB;
+}
+.medical-indicator-card.status-borderline {
+  border-left: 5px solid #D97706;
+}
+.medical-indicator-card.status-check_with_doctor {
+  border-left: 5px solid #6B7280;
+}
+
+.indicator-top-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.indicator-name {
+  font-weight: 800;
+  font-size: 1.05em;
+  color: var(--text-primary);
+}
+
+.indicator-status-pill {
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 0.78em;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.indicator-status-pill.normal {
+  background: #DCFCE7;
+  color: #166534;
+  border: 1px solid #86EFAC;
+}
+.indicator-status-pill.high {
+  background: #FEE2E2;
+  color: #991B1B;
+  border: 1px solid #FCA5A5;
+}
+.indicator-status-pill.borderline {
+  background: #FEF3C7;
+  color: #92400E;
+  border: 1px solid #FDE68A;
+}
+.indicator-status-pill.low {
+  background: #DBEAFE;
+  color: #1E40AF;
+  border: 1px solid #93C5FD;
+}
+.indicator-status-pill.check_with_doctor {
+  background: #F3F4F6;
+  color: #374151;
+  border: 1px solid #D1D5DB;
+}
+
+.indicator-value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.indicator-value {
+  font-size: 1.3em;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.indicator-range {
+  font-size: 0.85em;
+  color: var(--text-muted);
+}
+
+.indicator-meaning {
+  font-size: 0.9em;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+.doctor-questions-card {
+  background: #EFF6FF;
+  border: 1.5px solid #BFDBFE;
+  border-radius: var(--radius-btn);
+  padding: 20px 22px;
+}
+
+.doctor-questions-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.doctor-question-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.95em;
+  color: #1E3A8A;
+  line-height: 1.5;
+}
+
+.doctor-question-bullet {
+  font-weight: 800;
+  color: #2563EB;
+}
+
+.medical-disclaimer-box {
+  background: #F8FAFC;
+  border: 1px solid #CBD5E1;
+  border-radius: var(--radius-btn);
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.88em;
+  color: #475569;
+  line-height: 1.45;
+}
+
 /* Facts List */
 .section-heading {
   font-size: 1.25em;

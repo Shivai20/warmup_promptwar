@@ -27,6 +27,35 @@ class SuggestedTask(BaseModel):
     source_excerpt: Optional[str] = Field(None, description="Direct quote from notice")
 
 
+class MedicalIndicator(BaseModel):
+    name: str = Field(..., description="Test parameter name, e.g. 'Fasting Blood Sugar'")
+    value: str = Field(..., description="Patient value with unit, e.g. '135 mg/dL'")
+    reference_range: Optional[str] = Field(None, description="Normal reference range, e.g. '70 - 100 mg/dL'")
+    status: str = Field(default="check_with_doctor", description="Status: 'normal', 'high', 'low', 'borderline', 'check_with_doctor'")
+    source_excerpt: str = Field(..., description="Verbatim quote from the report")
+    simple_meaning: str = Field(..., description="Simple senior-friendly explanation of what this test means")
+
+
+class MedicalReportResponse(BaseModel):
+    summary: str = Field(..., description="Calm, reassuring plain-language summary of the report")
+    patient_name: Optional[str] = Field(None, description="Patient name if mentioned, or null")
+    report_date: Optional[str] = Field(None, description="Date of lab report if mentioned, or null")
+    indicators: List[MedicalIndicator] = Field(default_factory=list, description="Extracted test results")
+    unfamiliar_terms: List[TermItem] = Field(default_factory=list, description="Medical jargon defined simply")
+    doctor_questions: List[str] = Field(default_factory=list, description="Prepared questions for the senior to ask their doctor")
+    suggested_followups: List[SuggestedTask] = Field(default_factory=list, description="Follow-up doctor or medicine reminders")
+    disclaimer: str = Field(
+        default="Beta AI explains reports for your understanding and peace of mind. Please consult your physician before making any changes to your medication or diet.",
+        description="Clear medical safety disclaimer"
+    )
+    language: str = Field(default="en")
+
+
+class MedicalReportRequest(BaseModel):
+    text: str = Field(..., max_length=5000, description="Medical report text or lab results to analyze")
+    language: str = Field(default="en", description="Target language: 'en' or 'hi'")
+
+
 class ExplainRequest(BaseModel):
     text: str = Field(..., max_length=5000, description="Notice text to explain")
     language: str = Field(default="en", description="Target language: 'en' or 'hi'")
@@ -40,6 +69,7 @@ class ExplainResponse(BaseModel):
     clarifications: List[str] = Field(default_factory=list, description="Missing or ambiguous details, e.g. unknown dates")
     suggested_tasks: List[SuggestedTask] = Field(default_factory=list, description="Candidate actions for My Day")
     cautions: List[str] = Field(default_factory=list, description="Specific safety or timing cautions")
+    medical_report: Optional[MedicalReportResponse] = Field(None, description="Medical report details if detected as a medical document")
     language: str = Field(default="en")
 
 

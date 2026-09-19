@@ -165,9 +165,14 @@
         <textarea id="notice-input-text" class="notice-textarea" maxlength="5000" placeholder="Type or paste notice text here..."></textarea>
         
         <div class="notice-actions">
-          <button id="btn-use-sample-notice" class="sample-notice-btn">
-            📋 <span id="txt-sample-btn">Try Sample Notice (Orientation)</span>
-          </button>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+            <button id="btn-use-sample-notice" class="sample-notice-btn">
+              📋 <span id="txt-sample-btn">Try Sample Notice (Orientation)</span>
+            </button>
+            <button id="btn-use-sample-medical" class="sample-notice-btn">
+              🩺 <span id="txt-sample-medical-btn">Try Medical Lab Report</span>
+            </button>
+          </div>
           <button id="btn-submit-explain" class="btn-primary">
             ✨ <span id="txt-explain-btn">Explain Simply</span>
           </button>
@@ -188,6 +193,41 @@
         <div class="summary-card">
           <h2 class="summary-title" id="txt-summary-title">Plain-Language Summary</h2>
           <p id="explain-summary-text" class="summary-text"></p>
+        </div>
+
+        <!-- Dedicated Senior Medical Report Section (shown if medical report detected) -->
+        <div id="medical-report-section" class="medical-section-container" style="display: none;">
+          <div class="medical-header-banner">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 1.5em;">🩺</span>
+              <div>
+                <h2 class="section-heading" style="margin: 0; color: #065F46;" id="txt-med-section-title">Health Indicators & Lab Analysis</h2>
+                <div id="medical-report-meta" class="medical-report-meta"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Key Health Indicators Grid -->
+          <div id="medical-indicators-list" class="medical-indicators-grid"></div>
+
+          <!-- Questions for Your Doctor -->
+          <div class="doctor-questions-card">
+            <h3 style="font-size: 1.15em; font-weight: 800; color: #1E3A8A; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+              <span>❓</span> <span id="txt-med-doctor-q-title">Helpful Questions to Ask Your Doctor</span>
+            </h3>
+            <ul id="medical-doctor-questions" class="doctor-questions-list"></ul>
+          </div>
+
+          <!-- Medical Safety Disclaimer -->
+          <div class="medical-disclaimer-box" id="medical-disclaimer-box">
+            <span>🛡️</span>
+            <p id="medical-disclaimer-text">Beta AI explains reports for your understanding and peace of mind. Please consult your physician before making any changes to your medication or diet.</p>
+          </div>
+
+          <!-- Add Medical Follow-up to My Day -->
+          <button id="btn-add-medical-reminder" class="btn-primary-subtle" style="width: 100%; margin-top: 10px; justify-content: center;">
+            📅 <span id="txt-med-add-reminder">Schedule Doctor Consultation in My Day</span>
+          </button>
         </div>
 
         <!-- Clarifications & Unknowns if present -->

@@ -11,8 +11,16 @@ from app.schemas import (
     SimplifyStepResponse,
     VoiceIntentRequest,
     VoiceIntentResponse,
+    MedicalReportRequest,
+    MedicalReportResponse,
 )
-from app.ai_service import explain_notice, simplify_step, parse_voice_intent, is_ai_live
+from app.ai_service import (
+    explain_notice,
+    simplify_step,
+    parse_voice_intent,
+    analyze_medical_report,
+    is_ai_live,
+)
 
 app = FastAPI(
     title="Beta AI - Senior Daily Companion",
@@ -52,6 +60,15 @@ async def api_explain(req: ExplainRequest):
     if len(req.text) > 5000:
         raise HTTPException(status_code=400, detail="Notice text exceeds 5,000 character limit.")
     return await explain_notice(req.text.strip(), language=req.language)
+
+
+@app.post("/api/analyze-medical-report", response_model=MedicalReportResponse)
+async def api_analyze_medical_report(req: MedicalReportRequest):
+    if not req.text or not req.text.strip():
+        raise HTTPException(status_code=400, detail="Medical report text cannot be empty.")
+    if len(req.text) > 5000:
+        raise HTTPException(status_code=400, detail="Medical report text exceeds 5,000 character limit.")
+    return await analyze_medical_report(req.text.strip(), language=req.language)
 
 
 @app.post("/api/simplify-step", response_model=SimplifyStepResponse)
