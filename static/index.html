@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Beta AI — Senior Daily Companion</title>
+  <meta name="description" content="An accessible, intelligent and trustworthy daily companion for senior citizens. Understand notices, take guided steps, and manage your day with confidence.">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="text-size-20">
+
+  <!-- Accessible Skip Link -->
+  <a href="#main-area" class="skip-link">Skip to main content</a>
+
+  <!-- ARIA Live Announcer for Screen Readers -->
+  <div id="live-announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- App Header -->
+  <header class="app-header" role="banner">
+    <div class="header-container">
+      <div class="brand-area">
+        <button id="brand-home-btn" class="nav-home-btn" style="border:none; padding:4px 8px; font-size:1.1em;" aria-label="Go to Home">
+          🏛️ <span class="brand-title">Beta AI</span>
+        </button>
+        <span class="brand-tagline" id="txt-brand-tagline">Senior Daily Companion</span>
+      </div>
+
+      <div class="header-controls">
+        <!-- Language Switcher -->
+        <div class="control-group" role="group" aria-label="Language selection">
+          <button id="btn-lang-en" class="pref-btn active" aria-pressed="true">English</button>
+          <button id="btn-lang-hi" class="pref-btn" aria-pressed="false">हिन्दी</button>
+        </div>
+
+        <!-- Font Size Controls -->
+        <div class="control-group" role="group" aria-label="Text size selection">
+          <button id="btn-size-20" class="pref-btn active" title="Standard text size (20px)" aria-pressed="true">A</button>
+          <button id="btn-size-24" class="pref-btn" title="Larger text size (24px)" aria-pressed="false">A+</button>
+          <button id="btn-size-28" class="pref-btn" title="Extra large text size (28px)" aria-pressed="false">A++</button>
+        </div>
+
+        <!-- Clear Data -->
+        <button id="btn-clear-data" class="clear-data-btn" title="Clear saved data on this browser">
+          🗑️ <span id="txt-clear-data">Clear Data</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main id="main-area" class="main-content" role="main">
+
+    <!-- Grounded Proactive Suggestion Banner -->
+    <section id="proactive-banner" class="proactive-banner" style="display: none;" aria-label="Helpful reminder">
+      <div class="proactive-text-group">
+        <h2 id="proactive-title">Helpful Suggestion</h2>
+        <p id="proactive-desc">Based on your saved notice, you have an unfinished step.</p>
+      </div>
+      <button id="proactive-action-btn" class="proactive-action-btn">Continue Guide</button>
+    </section>
+
+    <!-- Persistent Undo Bar (shown when an action can be undone) -->
+    <div id="undo-bar" class="undo-bar" style="display: none;" role="status">
+      <span id="undo-message">Task updated.</span>
+      <button id="btn-undo" class="undo-btn">↩️ Undo Last Change</button>
+    </div>
+
+    <!-- VIEW 1: HOME SCREEN -->
+    <section id="view-home" class="screen-view">
+      <div style="margin-bottom: 24px;">
+        <h1 class="screen-title" id="txt-home-title">Welcome. How can I help you today?</h1>
+        <p style="color: var(--text-secondary); margin-top: 6px;" id="txt-home-subtitle">
+          Choose an option below or tap the microphone at the bottom to speak.
+        </p>
+      </div>
+
+      <!-- 3 Connected Workflow Cards -->
+      <div class="workflow-grid">
+        <!-- Card 1: Explain Something -->
+        <button id="card-explain" class="workflow-card" aria-label="Explain something: Understand a letter, appointment, or notice simply">
+          <div>
+            <div class="card-icon">📄</div>
+            <h2 class="card-title" id="txt-card1-title">Explain something</h2>
+            <p class="card-desc" id="txt-card1-desc">
+              Paste or read a letter, medical notice, or message. We will explain it in simple, calm words.
+            </p>
+          </div>
+          <div class="card-cta"><span id="txt-card1-cta">Open explanation</span> →</div>
+        </button>
+
+        <!-- Card 2: Guide Me -->
+        <button id="card-guide" class="workflow-card" aria-label="Guide me: Follow step-by-step instructions at your own pace">
+          <div>
+            <div class="card-icon">🧭</div>
+            <h2 class="card-title" id="txt-card2-title">Guide me</h2>
+            <p class="card-desc" id="txt-card2-desc">
+              Walk through instructions one step at a time with big buttons, zero rush, and clear help.
+            </p>
+          </div>
+          <div class="card-cta"><span id="txt-card2-cta">Open guide</span> →</div>
+        </button>
+
+        <!-- Card 3: My Day -->
+        <button id="card-myday" class="workflow-card" aria-label="My day: Check and manage your tasks and reminders">
+          <div>
+            <div class="card-icon">📅</div>
+            <h2 class="card-title" id="txt-card3-title">My day</h2>
+            <p class="card-desc" id="txt-card3-desc">
+              Review your tasks and reminders. Keep track of what to do today with total confidence.
+            </p>
+          </div>
+          <div class="card-cta"><span id="txt-card3-cta">View my tasks</span> →</div>
+        </button>
+      </div>
+
+      <!-- Home Summary Box -->
+      <div class="today-summary-box">
+        <div class="today-summary-text">
+          <h3 id="txt-summary-heading">Your Day at a Glance</h3>
+          <p id="txt-summary-count">You have 0 tasks scheduled for today.</p>
+        </div>
+        <button id="btn-home-quick-add" class="btn-secondary">
+          ➕ <span id="txt-add-task-btn">Add a Reminder</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- VIEW 2: EXPLAIN SCREEN -->
+    <section id="view-explain" class="screen-view" style="display: none;">
+      <div class="screen-header">
+        <button id="btn-back-from-explain" class="nav-back-btn">← <span id="txt-back-1">Back</span></button>
+        <h1 class="screen-title" id="txt-explain-heading">Explain Notice</h1>
+        <button id="btn-home-from-explain" class="nav-home-btn">🏛️ <span id="txt-home-nav-1">Home</span></button>
+      </div>
+
+      <!-- Notice Input Card -->
+      <div class="notice-input-card">
+        <label for="notice-input-text" class="form-label" id="txt-paste-prompt">
+          Paste or type the notice, letter, or message here:
+        </label>
+        <textarea id="notice-input-text" class="notice-textarea" maxlength="5000" placeholder="Type or paste notice text here..."></textarea>
+        
+        <div class="notice-actions">
+          <button id="btn-use-sample-notice" class="sample-notice-btn">
+            📋 <span id="txt-sample-btn">Try Sample Notice (Orientation)</span>
+          </button>
+          <button id="btn-submit-explain" class="btn-primary">
+            ✨ <span id="txt-explain-btn">Explain Simply</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Results Container -->
+      <div id="explain-results" class="results-container" style="display: none;">
+        <!-- Audio Read Aloud Bar -->
+        <div class="audio-toolbar" role="region" aria-label="Audio controls">
+          <button id="btn-audio-explain-play" class="audio-btn">🔊 <span id="txt-audio-read">Read Aloud</span></button>
+          <button id="btn-audio-explain-stop" class="audio-btn" style="display: none;">⏹️ <span id="txt-audio-stop">Stop</span></button>
+          <button id="btn-audio-explain-replay" class="audio-btn" style="display: none;">🔁 <span id="txt-audio-replay">Replay</span></button>
+          <button id="btn-explain-simpler" class="audio-btn" style="margin-left: auto;">💡 <span id="txt-make-simpler">Make It Simpler</span></button>
+        </div>
+
+        <!-- Plain Language Summary -->
+        <div class="summary-card">
+          <h2 class="summary-title" id="txt-summary-title">Plain-Language Summary</h2>
+          <p id="explain-summary-text" class="summary-text"></p>
+        </div>
+
+        <!-- Clarifications & Unknowns if present -->
+        <div id="explain-clarifications-box" class="alert-card" style="display: none;">
+          <strong>❓ <span id="txt-missing-title">Important Details to Check:</span></strong>
+          <ul id="explain-clarifications-list" style="margin-top: 6px; padding-left: 20px;"></ul>
+        </div>
+
+        <!-- Cautions if present -->
+        <div id="explain-cautions-box" class="alert-card" style="display: none; background: #FEE2E2; border-color: var(--color-danger); color: #991B1B;">
+          <strong>⚠️ <span id="txt-cautions-title">Important Caution:</span></strong>
+          <ul id="explain-cautions-list" style="margin-top: 6px; padding-left: 20px;"></ul>
+        </div>
+
+        <!-- Important Facts with Trace Excerpts -->
+        <h2 class="section-heading" id="txt-facts-title">Important Facts Preserved From Notice</h2>
+        <div id="explain-facts-list" class="facts-list"></div>
+
+        <!-- Unfamiliar Terms Defined -->
+        <div id="explain-terms-section" style="display: none;">
+          <h2 class="section-heading" id="txt-terms-title">Unfamiliar Terms Explained</h2>
+          <div id="explain-terms-list"></div>
+        </div>
+
+        <!-- Next Step Options -->
+        <div style="display: flex; flex-wrap: wrap; gap: 14px; margin-top: 20px;">
+          <button id="btn-start-guide-from-explain" class="btn-primary" style="flex: 1;">
+            🧭 <span id="txt-guide-me-btn">Guide Me Through This</span>
+          </button>
+          <button id="btn-add-action-from-explain" class="btn-secondary" style="flex: 1;">
+            📅 <span id="txt-add-to-myday-btn">Add an Action to My Day</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 3: GUIDE SCREEN -->
+    <section id="view-guide" class="screen-view" style="display: none;">
+      <div class="screen-header">
+        <button id="btn-back-from-guide" class="nav-back-btn">← <span id="txt-back-2">Back</span></button>
+        <h1 class="screen-title" id="txt-guide-heading">Step-by-Step Guide</h1>
+        <button id="btn-home-from-guide" class="nav-home-btn">🏛️ <span id="txt-home-nav-2">Home</span></button>
+      </div>
+
+      <div class="wizard-card">
+        <div class="step-meta">
+          <span id="guide-step-counter" class="step-counter">Step 1 of 3</span>
+          <button id="btn-guide-audio" class="audio-btn">🔊 <span id="txt-read-step">Read Step</span></button>
+        </div>
+
+        <div class="step-instruction-box">
+          <p id="guide-step-instruction" class="step-instruction-text">Loading step...</p>
+          <div id="guide-step-quote" class="source-quote" style="display: none;"></div>
+        </div>
+
+        <!-- Simplified Step Explanation if requested -->
+        <div id="guide-step-reassurance" class="step-reassurance-box" style="display: none;">
+          <p id="guide-reassurance-text"></p>
+        </div>
+
+        <!-- Step Actions -->
+        <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px;">
+          <button id="btn-simplify-step" class="sample-notice-btn">
+            💡 <span id="txt-explain-step-btn">Explain this step simply</span>
+          </button>
+          <button id="btn-add-step-to-task" class="sample-notice-btn">
+            📅 <span id="txt-add-step-task-btn">Add this step to My Day</span>
+          </button>
+        </div>
+
+        <!-- Wizard Navigation -->
+        <div class="wizard-nav-bar">
+          <button id="btn-guide-prev" class="btn-secondary" disabled>← <span id="txt-prev-step">Previous Step</span></button>
+          <button id="btn-guide-next" class="btn-primary"><span id="txt-next-step">Next Step</span> →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 4: MY DAY SCREEN -->
+    <section id="view-myday" class="screen-view" style="display: none;">
+      <div class="screen-header">
+        <button id="btn-back-from-myday" class="nav-back-btn">← <span id="txt-back-3">Back</span></button>
+        <h1 class="screen-title" id="txt-myday-heading">My Day</h1>
+        <button id="btn-home-from-myday" class="nav-home-btn">🏛️ <span id="txt-home-nav-3">Home</span></button>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <p style="color: var(--text-secondary);" id="txt-myday-subtitle">Review, edit, and complete your tasks for today.</p>
+        <button id="btn-myday-add-task" class="btn-primary">
+          ➕ <span id="txt-new-task-btn">Add New Task</span>
+        </button>
+      </div>
+
+      <!-- Task Groups -->
+      <div id="task-group-today" class="task-group">
+        <h2 class="group-title">🔔 <span id="txt-due-today">Due Today & Overdue</span> <span id="badge-count-today" class="group-badge">0</span></h2>
+        <div id="tasks-list-today" class="task-list"></div>
+      </div>
+
+      <div id="task-group-upcoming" class="task-group">
+        <h2 class="group-title">🗓️ <span id="txt-upcoming">Upcoming</span> <span id="badge-count-upcoming" class="group-badge">0</span></h2>
+        <div id="tasks-list-upcoming" class="task-list"></div>
+      </div>
+
+      <div id="task-group-undated" class="task-group">
+        <h2 class="group-title">📝 <span id="txt-undated">General / Anytime</span> <span id="badge-count-undated" class="group-badge">0</span></h2>
+        <div id="tasks-list-undated" class="task-list"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- PERSISTENT VOICE DOCK -->
+  <aside class="voice-dock" role="complementary" aria-label="Voice assistance">
+    <div class="voice-dock-container">
+      <div class="voice-status-group">
+        <span id="voice-status-badge" class="status-badge ready">Ready</span>
+        <span id="voice-timer" class="voice-timer" style="display: none;">0:30</span>
+        <span id="voice-feedback-text" style="font-size: 0.88em; color: var(--text-secondary);">Tap to speak a question or task</span>
+      </div>
+
+      <button id="btn-main-voice" class="voice-btn-main" aria-label="Tap to speak" aria-pressed="false">
+        <span id="voice-icon">🎤</span>
+        <span id="voice-btn-label">Tap to speak</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- MODAL 1: CONFIRMATION DIALOG -->
+  <div id="modal-confirm" class="modal-overlay" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title">
+    <div class="modal-card">
+      <h2 id="confirm-modal-title" class="modal-title">Please Confirm Your Task</h2>
+      <p class="modal-body" id="confirm-modal-desc">Review the details below before saving it to My Day:</p>
+      
+      <div class="modal-preview-box">
+        <div class="preview-field">
+          <div class="preview-field-label">Title</div>
+          <div id="confirm-preview-title" class="preview-field-value">-</div>
+        </div>
+        <div class="preview-field">
+          <div class="preview-field-label">Date & Time</div>
+          <div id="confirm-preview-datetime" class="preview-field-value">-</div>
+        </div>
+        <div class="preview-field">
+          <div class="preview-field-label">Time Zone</div>
+          <div id="confirm-preview-tz" class="preview-field-value">-</div>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button id="btn-confirm-cancel" class="btn-secondary">Cancel</button>
+        <button id="btn-confirm-edit" class="btn-secondary">Edit Details</button>
+        <button id="btn-confirm-accept" class="btn-primary">✓ Confirm & Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 2: MANUAL TASK / EDIT DIALOG -->
+  <div id="modal-task-form" class="modal-overlay" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="task-form-title">
+    <div class="modal-card">
+      <h2 id="task-form-title" class="modal-title">Task Details</h2>
+      
+      <div style="margin-bottom: 16px;">
+        <label for="task-form-input-title" class="form-label">Task Title *</label>
+        <input type="text" id="task-form-input-title" class="notice-textarea" style="min-height: 48px; height: 48px;" placeholder="What do you need to do?">
+      </div>
+
+      <div style="margin-bottom: 16px;">
+        <label for="task-form-input-date" class="form-label">Date & Time (Optional)</label>
+        <input type="datetime-local" id="task-form-input-date" class="notice-textarea" style="min-height: 48px; height: 48px;">
+      </div>
+
+      <div style="margin-bottom: 24px;">
+        <label for="task-form-input-notes" class="form-label">Notes (Optional)</label>
+        <textarea id="task-form-input-notes" class="notice-textarea" style="min-height: 80px;" placeholder="Any extra notes or room numbers..."></textarea>
+      </div>
+
+      <div class="modal-actions">
+        <button id="btn-task-form-cancel" class="btn-secondary">Cancel</button>
+        <button id="btn-task-form-save" class="btn-primary">Save Task</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 3: VOICE SPEECH REVIEW DIALOG -->
+  <div id="modal-voice-review" class="modal-overlay" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="voice-review-title">
+    <div class="modal-card">
+      <h2 id="voice-review-title" class="modal-title">Review What We Heard</h2>
+      <p class="modal-body">Check the text below before we process it:</p>
+
+      <textarea id="voice-review-transcript" class="notice-textarea" style="min-height: 100px;"></textarea>
+
+      <div class="modal-actions">
+        <button id="btn-voice-review-retry" class="btn-secondary">🔄 Try Again</button>
+        <button id="btn-voice-review-continue" class="btn-primary">✓ Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
