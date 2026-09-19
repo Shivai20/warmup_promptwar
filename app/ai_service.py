@@ -18,6 +18,7 @@ load_dotenv()
 
 # Check for API key
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+PRIMARY_MODEL = os.getenv("GEMINI_MODEL", "gemini-flash-lite-latest")
 
 genai_client = None
 if GEMINI_API_KEY:
@@ -309,7 +310,7 @@ Respond ONLY with valid JSON matching this schema:
 
     try:
         response = genai_client.models.generate_content(
-            model="gemini-2.5-flash",
+            model=PRIMARY_MODEL,
             contents=[
                 {"role": "user", "parts": [{"text": system_prompt + f"\n\nNOTICE CONTENT:\n```\n{text}\n```"}]}
             ],
@@ -354,7 +355,7 @@ Respond ONLY with valid JSON:
 """
     try:
         response = genai_client.models.generate_content(
-            model="gemini-2.5-flash",
+            model=PRIMARY_MODEL,
             contents=[{"role": "user", "parts": [{"text": prompt}]}],
             config={
                 "response_mime_type": "application/json",
@@ -457,7 +458,7 @@ Respond ONLY with valid JSON:
 """
         try:
             res = genai_client.models.generate_content(
-                model="gemini-2.5-flash",
+                model=PRIMARY_MODEL,
                 contents=[{"role": "user", "parts": [{"text": prompt}]}],
                 config={"response_mime_type": "application/json", "temperature": 0.1},
             )
