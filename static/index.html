@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Beta AI — Senior Daily Companion</title>
   <meta name="description" content="An accessible, intelligent and trustworthy daily companion for senior citizens. Understand notices, take guided steps, and manage your day with confidence.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body class="text-size-20">
@@ -19,10 +22,13 @@
   <header class="app-header" role="banner">
     <div class="header-container">
       <div class="brand-area">
-        <button id="brand-home-btn" class="nav-home-btn" style="border:none; padding:4px 8px; font-size:1.1em;" aria-label="Go to Home">
-          🏛️ <span class="brand-title">Beta AI</span>
+        <button id="brand-home-btn" class="nav-home-btn-logo" aria-label="Go to Home">
+          <div class="brand-icon">🏛️</div>
+          <div class="brand-text-block">
+            <span class="brand-title">Beta AI</span>
+            <span class="brand-tagline" id="txt-brand-tagline">Senior Daily Companion</span>
+          </div>
         </button>
-        <span class="brand-tagline" id="txt-brand-tagline">Senior Daily Companion</span>
       </div>
 
       <div class="header-controls">
@@ -67,9 +73,9 @@
 
     <!-- VIEW 1: HOME SCREEN -->
     <section id="view-home" class="screen-view">
-      <div style="margin-bottom: 24px;">
+      <div class="home-welcome-header">
         <h1 class="screen-title" id="txt-home-title">Welcome. How can I help you today?</h1>
-        <p style="color: var(--text-secondary); margin-top: 6px;" id="txt-home-subtitle">
+        <p class="screen-subtitle" id="txt-home-subtitle">
           Choose an option below or tap the microphone at the bottom to speak.
         </p>
       </div>
@@ -77,49 +83,67 @@
       <!-- 3 Connected Workflow Cards -->
       <div class="workflow-grid">
         <!-- Card 1: Explain Something -->
-        <button id="card-explain" class="workflow-card" aria-label="Explain something: Understand a letter, appointment, or notice simply">
-          <div>
-            <div class="card-icon">📄</div>
+        <button id="card-explain" class="workflow-card card-theme-emerald" aria-label="Explain something: Understand a letter, appointment, or notice simply">
+          <div class="card-content-top">
+            <div class="card-icon-container card-icon-emerald">
+              <span class="card-glyph">📄</span>
+            </div>
             <h2 class="card-title" id="txt-card1-title">Explain something</h2>
             <p class="card-desc" id="txt-card1-desc">
               Paste or read a letter, medical notice, or message. We will explain it in simple, calm words.
             </p>
           </div>
-          <div class="card-cta"><span id="txt-card1-cta">Open explanation</span> →</div>
+          <div class="card-cta-pill">
+            <span id="txt-card1-cta">Open explanation</span>
+            <span class="cta-arrow" aria-hidden="true">→</span>
+          </div>
         </button>
 
         <!-- Card 2: Guide Me -->
-        <button id="card-guide" class="workflow-card" aria-label="Guide me: Follow step-by-step instructions at your own pace">
-          <div>
-            <div class="card-icon">🧭</div>
+        <button id="card-guide" class="workflow-card card-theme-indigo" aria-label="Guide me: Follow step-by-step instructions at your own pace">
+          <div class="card-content-top">
+            <div class="card-icon-container card-icon-indigo">
+              <span class="card-glyph">🧭</span>
+            </div>
             <h2 class="card-title" id="txt-card2-title">Guide me</h2>
             <p class="card-desc" id="txt-card2-desc">
               Walk through instructions one step at a time with big buttons, zero rush, and clear help.
             </p>
           </div>
-          <div class="card-cta"><span id="txt-card2-cta">Open guide</span> →</div>
+          <div class="card-cta-pill">
+            <span id="txt-card2-cta">Open guide</span>
+            <span class="cta-arrow" aria-hidden="true">→</span>
+          </div>
         </button>
 
         <!-- Card 3: My Day -->
-        <button id="card-myday" class="workflow-card" aria-label="My day: Check and manage your tasks and reminders">
-          <div>
-            <div class="card-icon">📅</div>
+        <button id="card-myday" class="workflow-card card-theme-amber" aria-label="My day: Check and manage your tasks and reminders">
+          <div class="card-content-top">
+            <div class="card-icon-container card-icon-amber">
+              <span class="card-glyph">📅</span>
+            </div>
             <h2 class="card-title" id="txt-card3-title">My day</h2>
             <p class="card-desc" id="txt-card3-desc">
               Review your tasks and reminders. Keep track of what to do today with total confidence.
             </p>
           </div>
-          <div class="card-cta"><span id="txt-card3-cta">View my tasks</span> →</div>
+          <div class="card-cta-pill">
+            <span id="txt-card3-cta">View my tasks</span>
+            <span class="cta-arrow" aria-hidden="true">→</span>
+          </div>
         </button>
       </div>
 
       <!-- Home Summary Box -->
       <div class="today-summary-box">
-        <div class="today-summary-text">
-          <h3 id="txt-summary-heading">Your Day at a Glance</h3>
-          <p id="txt-summary-count">You have 0 tasks scheduled for today.</p>
+        <div class="today-summary-left">
+          <div class="today-summary-icon">☀️</div>
+          <div class="today-summary-text">
+            <h3 id="txt-summary-heading">Your Day at a Glance</h3>
+            <p id="txt-summary-count">You have 0 tasks scheduled for today.</p>
+          </div>
         </div>
-        <button id="btn-home-quick-add" class="btn-secondary">
+        <button id="btn-home-quick-add" class="btn-primary-subtle">
           ➕ <span id="txt-add-task-btn">Add a Reminder</span>
         </button>
       </div>
@@ -282,11 +306,11 @@
       <div class="voice-status-group">
         <span id="voice-status-badge" class="status-badge ready">Ready</span>
         <span id="voice-timer" class="voice-timer" style="display: none;">0:30</span>
-        <span id="voice-feedback-text" style="font-size: 0.88em; color: var(--text-secondary);">Tap to speak a question or task</span>
+        <span id="voice-feedback-text" class="voice-feedback-text">Tap to speak a question or task</span>
       </div>
 
-      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-        <button id="btn-voice-type-fallback" class="btn-secondary" style="min-height: 52px; border-radius: 26px; padding: 8px 16px; font-weight: 700; font-size: 0.88em;" aria-label="Type your voice request">
+      <div class="voice-actions-group">
+        <button id="btn-voice-type-fallback" class="voice-btn-type" aria-label="Type your voice request">
           ⌨️ <span id="txt-voice-type-label">Type request</span>
         </button>
         <button id="btn-main-voice" class="voice-btn-main" aria-label="Tap to speak" aria-pressed="false">
