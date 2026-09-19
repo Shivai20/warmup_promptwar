@@ -285,10 +285,15 @@
         <span id="voice-feedback-text" style="font-size: 0.88em; color: var(--text-secondary);">Tap to speak a question or task</span>
       </div>
 
-      <button id="btn-main-voice" class="voice-btn-main" aria-label="Tap to speak" aria-pressed="false">
-        <span id="voice-icon">🎤</span>
-        <span id="voice-btn-label">Tap to speak</span>
-      </button>
+      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+        <button id="btn-voice-type-fallback" class="btn-secondary" style="min-height: 52px; border-radius: 26px; padding: 8px 16px; font-weight: 700; font-size: 0.88em;" aria-label="Type your voice request">
+          ⌨️ <span id="txt-voice-type-label">Type request</span>
+        </button>
+        <button id="btn-main-voice" class="voice-btn-main" aria-label="Tap to speak" aria-pressed="false">
+          <span id="voice-icon">🎤</span>
+          <span id="voice-btn-label">Tap to speak</span>
+        </button>
+      </div>
     </div>
   </aside>
 
@@ -351,10 +356,20 @@
   <!-- MODAL 3: VOICE SPEECH REVIEW DIALOG -->
   <div id="modal-voice-review" class="modal-overlay" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="voice-review-title">
     <div class="modal-card">
-      <h2 id="voice-review-title" class="modal-title">Review What We Heard</h2>
-      <p class="modal-body">Check the text below before we process it:</p>
+      <h2 id="voice-review-title" class="modal-title">Voice Command & Review</h2>
+      <p class="modal-body" id="voice-review-desc">Speak, type, or choose a voice command below:</p>
+      <textarea id="voice-review-transcript" class="notice-textarea" style="min-height: 90px; margin-bottom: 12px;" placeholder="e.g. Remind me to call the doctor tomorrow..."></textarea>
 
-      <textarea id="voice-review-transcript" class="notice-textarea" style="min-height: 100px;"></textarea>
+      <div style="margin-bottom: 16px;">
+        <span style="font-size: 0.85em; font-weight: 700; color: var(--text-secondary);">Quick example commands (or type above):</span>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px;">
+          <button type="button" class="sample-notice-btn voice-chip-btn" data-text="Remind me to call the doctor tomorrow at 10 AM" style="padding: 6px 12px; font-size: 0.82em;">💊 "Remind me to call the doctor..."</button>
+          <button type="button" class="sample-notice-btn voice-chip-btn" data-text="Explain this notice" style="padding: 6px 12px; font-size: 0.82em;">📄 "Explain this notice"</button>
+          <button type="button" class="sample-notice-btn voice-chip-btn" data-text="Next step" style="padding: 6px 12px; font-size: 0.82em;">🧭 "Next step"</button>
+          <button type="button" class="sample-notice-btn voice-chip-btn" data-text="Make it simpler" style="padding: 6px 12px; font-size: 0.82em;">💡 "Make it simpler"</button>
+          <button type="button" class="sample-notice-btn voice-chip-btn" data-text="Show my tasks" style="padding: 6px 12px; font-size: 0.82em;">📅 "Show my tasks"</button>
+        </div>
+      </div>
 
       <div class="modal-actions">
         <button id="btn-voice-review-retry" class="btn-secondary">🔄 Try Again</button>

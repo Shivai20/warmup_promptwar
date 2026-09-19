@@ -199,6 +199,7 @@
     badgeCountUpcoming: document.getElementById('badge-count-upcoming'),
     badgeCountUndated: document.getElementById('badge-count-undated'),
     // Voice Dock
+    btnVoiceTypeFallback: document.getElementById('btn-voice-type-fallback'),
     btnMainVoice: document.getElementById('btn-main-voice'),
     voiceBtnLabel: document.getElementById('voice-btn-label'),
     voiceStatusBadge: document.getElementById('voice-status-badge'),
@@ -1014,6 +1015,7 @@
 
   // --- SPEECH ENGINE (WEB SPEECH API) ---
   let recognition = null;
+  let currentSessionTranscript = '';
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
   function initSpeechRecognition() {
@@ -1023,50 +1025,47 @@
     }
 
     const rec = new SpeechRecognition();
-    rec.continuous = false;
+    rec.continuous = true;
     rec.interimResults = true;
     rec.maxAlternatives = 1;
 
     rec.onstart = () => {
+      currentSessionTranscript = '';
       setVoiceStatus('listening', state.language === 'hi' ? 'सुन रहे हैं...' : 'Listening...');
       startVoiceTimer();
     };
 
     rec.onresult = (event) => {
-      let interim = '';
-      let final = '';
-      for (let i = event.resultIndex; i < event.results.length; ++i) {
-        if (event.results[i].isFinal) {
-          final += event.results[i][0].transcript;
-        } else {
-          interim += event.results[i][0].transcript;
-        }
+      let accumulated = '';
+      for (let i = 0; i < event.results.length; ++i) {
+        accumulated += event.results[i][0].transcript + ' ';
       }
-      const transcript = final || interim;
-      el.voiceFeedbackText.textContent = `"${transcript}"`;
-
-      if (final) {
-        handleVoiceTranscript(final);
-      }
+      currentSessionTranscript = accumulated.trim();
+      el.voiceFeedbackText.textContent = `"${currentSessionTranscript}"`;
     };
 
     rec.onerror = (event) => {
-      console.error('Speech recognition error:', event.error);
+      console.warn('Speech recognition status:', event.error);
+      if (event.error === 'no-speech') {
+        return; // Ignore brief silence
+      }
       stopVoiceTimer();
-      setVoiceStatus('error', `Speech error: ${event.error}. You can type instead.`);
-      if (event.error === 'not-allowed') {
-        alert(
-          state.language === 'hi'
-            ? 'माइक्रोफ़ोन अनुमति अस्वीकार कर दी गई थी। कृपया ब्राउज़र सेटिंग्स में माइक्रोफ़ोन की अनुमति दें या टाइप करके जारी रखें।'
-            : 'Microphone permission was denied. Please allow microphone access in your browser or type your request.'
-        );
+      setVoiceStatus('error', `Microphone: ${event.error}. You can type instead.`);
+      if (event.error === 'not-allowed' || event.error === 'audio-capture' || event.error === 'service-not-allowed') {
+        handleVoiceTranscript('');
       }
     };
 
     rec.onend = () => {
       stopVoiceTimer();
       if (state.speechState === 'listening') {
-        setVoiceStatus('ready', state.language === 'hi' ? 'तैयार' : 'Ready');
+        if (currentSessionTranscript && currentSessionTranscript.length > 0) {
+          const text = currentSessionTranscript;
+          currentSessionTranscript = '';
+          handleVoiceTranscript(text);
+        } else {
+          setVoiceStatus('ready', state.language === 'hi' ? 'तैयार' : 'Ready');
+        }
       }
     };
 
@@ -1089,11 +1088,8 @@
     }
 
     if (!recognition) {
-      alert(
-        state.language === 'hi'
-          ? 'आपके ब्राउज़र में आवाज़ इनपुट समर्थित नहीं है। कृपया लिखकर जारी रखें।'
-          : 'Voice input is not supported in this browser. Please type your request.'
-      );
+      // Browser does not support speech recognition (Firefox/old Safari) -> open fallback directly
+      handleVoiceTranscript('');
       return;
     }
 
@@ -1103,8 +1099,10 @@
       recognition.start();
     } catch (e) {
       console.warn('Error starting recognition:', e);
-      recognition.stop();
-      setTimeout(() => recognition.start(), 200);
+      try { recognition.stop(); } catch(err) {}
+      setTimeout(() => {
+        try { recognition.start(); } catch(err) { handleVoiceTranscript(''); }
+      }, 200);
     }
   }
 
@@ -1117,6 +1115,12 @@
       }
     }
     stopVoiceTimer();
+    if (currentSessionTranscript && currentSessionTranscript.length > 0) {
+      const text = currentSessionTranscript;
+      currentSessionTranscript = '';
+      handleVoiceTranscript(text);
+      return;
+    }
     setVoiceStatus('ready', state.language === 'hi' ? 'तैयार' : 'Ready');
   }
 
@@ -1401,6 +1405,23 @@
 
     // Persistent Main Voice Button
     el.btnMainVoice.addEventListener('click', toggleVoice);
+
+    // Nearby Voice Typing Fallback
+    if (el.btnVoiceTypeFallback) {
+      el.btnVoiceTypeFallback.addEventListener('click', () => {
+        handleVoiceTranscript('');
+      });
+    }
+
+    // Quick Voice Command Chips
+    document.querySelectorAll('.voice-chip-btn').forEach((chip) => {
+      chip.addEventListener('click', () => {
+        if (chip.dataset.text) {
+          el.voiceReviewTranscript.value = chip.dataset.text;
+          el.voiceReviewTranscript.focus();
+        }
+      });
+    });
   }
 
   // --- BOOTSTRAP APP ---
